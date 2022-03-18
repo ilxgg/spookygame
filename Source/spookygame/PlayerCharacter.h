@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "spookygame/StressComponent.h"
 #include "Camera/CameraComponent.h"
+#include "InteractionInterface.h"
 #include "PlayerCharacter.generated.h"
 
 UENUM(BlueprintType)
@@ -17,7 +18,7 @@ enum EPlayerStates
 };
 
 UCLASS()
-class SPOOKYGAME_API APlayerCharacter : public ACharacter
+class SPOOKYGAME_API APlayerCharacter : public ACharacter, public IInteractionInterface
 {
 	GENERATED_BODY()
 
@@ -56,15 +57,20 @@ public:
 
 	void LookRight(float value);
 
+	void TryInteract(); // Casts a line trace using visibility channel to see if hit object is interactable and if so interacts with it
+
 
 	UFUNCTION(BlueprintCallable)
-	void IncreaseStress(int amount);
+	void IncreaseStress(int amount); //Increases Stress of player
 
 	UFUNCTION(BlueprintCallable)
-	void DecreaseStress(int amount);
+	void DecreaseStress(int amount); //Decreases stress of player 
 
 	UFUNCTION(BlueprintCallable)
-	EPlayerStates GetPlayerState();
+	EPlayerStates GetPlayerState(); //returns the player's state
+
+	UFUNCTION(BlueprintCallable)
+	void Interact(AActor* InteractingActor) override; //Function used when an object interacts with the player
 
 
 protected:
@@ -73,11 +79,14 @@ protected:
 	TEnumAsByte<EPlayerStates> CurrentState;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Movement", meta = (DisplayName = "Running Stamina Drain (per second)"))
-	float RunDrain;
+	float RunDrain; //Amount of stamina per second drained when running
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Movement", meta = (DisplayName = "Stamina Regen (per second)"))
-		float StaminaRegenRate;
+	float StaminaRegenRate; //amount of stamina regained per second
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Controls", meta = (DisplayName = "Mouse Sensitivity"))
-		float SensMulti;
+	float SensMulti; //sensistivity multiplier for changing in game sensitivity
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Controls", meta = (DisplayName = "Interact Range"))
+	float InteractRange; //distance that the player can be from an object in order to interact with it
 };

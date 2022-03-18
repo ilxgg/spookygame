@@ -2,6 +2,8 @@
 
 
 #include "PlayerCharacter.h"
+#include "InteractableBase.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -16,6 +18,8 @@ APlayerCharacter::APlayerCharacter()
 
 	CurrentState = EPlayerStates::Walking;
 	SensMulti = 1.f;
+
+	InteractRange = 130.f;
 
 }
 
@@ -48,6 +52,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	ManageStamina(DeltaTime);
+	ManageStress(DeltaTime);
+
 }
 
 // Called to bind functionality to input
@@ -58,6 +65,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MoveRight", this, &APlayerCharacter::MoveRight);
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUp);
 	PlayerInputComponent->BindAxis("LookRight", this, &APlayerCharacter::LookRight);
+	PlayerInputComponent->BindAction(FName("Interact"), IE_Pressed, this, &APlayerCharacter::TryInteract);
 
 }
 
@@ -81,6 +89,8 @@ void APlayerCharacter::LookRight(float value)
 	AddControllerYawInput(value * SensMulti);
 }
 
+
+
 void APlayerCharacter::IncreaseStress(int amount)
 {
 	StressComponent->IncreaseStress(amount);
@@ -94,5 +104,30 @@ void APlayerCharacter::DecreaseStress(int amount)
 EPlayerStates APlayerCharacter::GetPlayerState()
 {
 	return CurrentState;
+}
+
+void APlayerCharacter::Interact(AActor* InteractingActor)
+{
+
+}
+
+void APlayerCharacter::TryInteract()
+{
+
+	FHitResult Result;
+	FVector CameraLoc = Camera->GetComponentLocation();
+	FVector CameraRotVec = Camera->GetComponentRotation().Vector();
+	DrawDebugSphere(GetWorld(), Camera->GetComponentLocation() + (CameraRotVec * InteractRange), 5.f, 26, FColor::Red, false, 3.f);
+	if (GetWorld()->LineTraceSingleByChannel(Result, Camera->GetComponentLocation(), Camera->GetComponentLocation() + (CameraRotVec * InteractRange), ECollisionChannel::ECC_Visibility))
+	{
+		if (Cast<IInteractionInterface>(Result.Actor))
+		{
+			AInteractableBase* InteractObj = Cast<AInteractableBase>(Result.Actor);
+			if (InteractObj)
+			{
+				InteractObj->Interact(this);
+			}
+		}
+	}
 }
 
