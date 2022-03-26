@@ -5,8 +5,8 @@
 
 // Add default functionality here for any IInteractionInterface functions that are not pure virtual.
 
-void IInteractionInterface::Interact(AActor* InteractingActor)
+EInteractableType IInteractionInterface::Interact(AActor* InteractingActor)
 {
-
+	return EInteractableType::None;
 }
 

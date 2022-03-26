@@ -25,7 +25,7 @@ protected:
 
 public:
 
-    virtual void Interact(AActor* InteractingActor) override;
+    virtual EInteractableType Interact(AActor* InteractingActor) override;
 
 
 

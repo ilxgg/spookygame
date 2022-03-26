@@ -8,7 +8,8 @@ ADoorInteractable::ADoorInteractable()
 	InteractionType = EInteractableType::Movable;
 }
 
-void ADoorInteractable::Interact(AActor* InteractingActor)
+EInteractableType ADoorInteractable::Interact(AActor* InteractingActor)
 {
 	Open();
+	return InteractionType;
 }

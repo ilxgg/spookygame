@@ -41,10 +41,10 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Stress")
-		void IncreaseStress(uint8 value); //increase stress by value
+		void IncreaseStress(float value); //increase stress by value
 
 	UFUNCTION(BlueprintCallable, Category = "Stress")
-		void DecreaseStress(uint8 value); //increase stress by value
+		void DecreaseStress(float value); //increase stress by value
 
 	UFUNCTION(BlueprintCallable, Category = "Stress")
 		float GetCurrentStress(); //Returns current stress amount as a decimal value out of max achievable stress
@@ -53,8 +53,8 @@ protected:
 
 
 
-	UPROPERTY()
-	uint8 StressCurrent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float StressCurrent;
 
 	UFUNCTION(BlueprintCallable)
 	void CheckStressLevel(); //Used to check if stress level is within acceptable range and if stress reaches max

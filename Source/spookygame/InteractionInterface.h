@@ -9,6 +9,7 @@
 UENUM()
 enum EInteractableType
 {
+	None, //Used as default value, does nothing if returned
 	Hidable,
 	Objective,
 	Movable,
@@ -31,9 +32,8 @@ class SPOOKYGAME_API IInteractionInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual void Interact(AActor* InteractingActor);
+	virtual EInteractableType Interact(AActor* InteractingActor);
 
-	EInteractableType GetInteractionType();
 
 
 

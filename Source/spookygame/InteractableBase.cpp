@@ -10,7 +10,7 @@ AInteractableBase::AInteractableBase()
 	PrimaryActorTick.bCanEverTick = true;
 
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
-	StaticMesh->SetupAttachment(RootComponent);
+	RootComponent = StaticMesh;
 
 }
 
@@ -28,8 +28,9 @@ void AInteractableBase::Tick(float DeltaTime)
 
 }
 
-void AInteractableBase::Interact(AActor* InteractingActor)
+EInteractableType AInteractableBase::Interact(AActor* InteractingActor)
 {
 	//stuff
+	return EInteractableType::None;
 }
 

@@ -24,14 +24,14 @@ void UStressComponent::BeginPlay()
 	
 }
 
-void UStressComponent::IncreaseStress(uint8 value)
+void UStressComponent::IncreaseStress(float value)
 {
 	StressCurrent += value;
 	CheckStressLevel();
 	OnStressUpdate(GetCurrentStress());
 }
 
-void UStressComponent::DecreaseStress(uint8 value)
+void UStressComponent::DecreaseStress(float value)
 {
 	StressCurrent -= value;
 	CheckStressLevel();
@@ -40,7 +40,7 @@ void UStressComponent::DecreaseStress(uint8 value)
 
 float UStressComponent::GetCurrentStress()
 {
-	return (StressCurrent/StressMax);
+	return (StressCurrent/float(StressMax));
 }
 
 

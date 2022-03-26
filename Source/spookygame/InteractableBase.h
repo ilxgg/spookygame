@@ -16,7 +16,7 @@ public:
 	// Sets default values for this actor's properties
 	AInteractableBase();
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* StaticMesh;
 
 	
@@ -31,7 +31,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void Interact(AActor* InteractingActor) override;
+	virtual EInteractableType Interact(AActor* InteractingActor) override;
 
 	
 

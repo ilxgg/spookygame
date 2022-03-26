@@ -32,12 +32,36 @@ void APlayerCharacter::BeginPlay()
 
 void APlayerCharacter::ManageStress(float DeltaTime)
 {
+	if (CurrentState != Hiding)
+	{
+		int ArrLength = StressPool.Num();
+		for (int32 it = 0; it < ArrLength; it++)
+		{
+			if (StressPool[it].Lifetime >= StressPool[it].Duration)
+			{
+				StressPool.RemoveAt(it);
+				break;
+			}
+			float perSecond = StressPool[it].NewStressVal / StressPool[it].Duration;
+			StressPool[it].Lifetime += DeltaTime;
+			IncreaseStress(perSecond * DeltaTime);
+		}
+	}
+	else
+	{
+		if (bPlayerInitialHide)
+		{
+			StressPool.Empty();
+			bPlayerInitialHide = false;
+		}
+		DecreaseStress(StressHidingDecrease * DeltaTime);
 
+	}
 }
 
-void APlayerCharacter::ManageStamina(float DeltaTime)
+void APlayerCharacter::ManageStamina(float DeltaTime, bool IsRunning)
 {
-	if (CurrentState = EPlayerStates::Running)
+	if (IsRunning)
 	{
 		//drains stamina
 	}
@@ -47,13 +71,36 @@ void APlayerCharacter::ManageStamina(float DeltaTime)
 	}
 }
 
+void APlayerCharacter::ManageMovement()
+{
+	switch (CurrentState)
+	{
+	default:
+		break;
+
+	case(Hiding):
+		UE_LOG(LogTemp, Warning, TEXT("Hiding"));
+		break;
+
+	case(Walking):
+		UE_LOG(LogTemp, Warning, TEXT("Walking"));
+		break;
+
+	case(Running):
+		UE_LOG(LogTemp, Warning, TEXT("Running"));
+		break;
+	
+	}
+}
+
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ManageStamina(DeltaTime);
+	ManageStamina(DeltaTime, false);
 	ManageStress(DeltaTime);
+	ManageMovement();
 
 }
 
@@ -69,34 +116,36 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-void APlayerCharacter::MoveForward(float value)
+void APlayerCharacter::MoveForward(float value) //Move forward and back function, doesnt allow movement when hiding
 {
-	AddMovementInput(GetActorForwardVector(), value);
+	if (CurrentState != Hiding)
+		AddMovementInput(GetActorForwardVector(), value);
 }
 
-void APlayerCharacter::MoveRight(float value)
+void APlayerCharacter::MoveRight(float value) //Move left and right function, doesnt allow movement when hiding
 {
-	AddMovementInput(GetActorRightVector(), value);
+	if (CurrentState != Hiding)
+		AddMovementInput(GetActorRightVector(), value);
 }
 
 void APlayerCharacter::LookUp(float value)
 {
-	AddControllerPitchInput(value * SensMulti);
+		AddControllerPitchInput(value * SensMulti);
 }
 
 void APlayerCharacter::LookRight(float value)
 {
-	AddControllerYawInput(value * SensMulti);
+		AddControllerYawInput(value * SensMulti);
 }
 
 
 
-void APlayerCharacter::IncreaseStress(int amount)
+void APlayerCharacter::IncreaseStress(float amount)
 {
 	StressComponent->IncreaseStress(amount);
 }
 
-void APlayerCharacter::DecreaseStress(int amount)
+void APlayerCharacter::DecreaseStress(float amount)
 {
 	StressComponent->DecreaseStress(amount);
 }
@@ -106,9 +155,9 @@ EPlayerStates APlayerCharacter::GetPlayerState()
 	return CurrentState;
 }
 
-void APlayerCharacter::Interact(AActor* InteractingActor)
+EInteractableType APlayerCharacter::Interact(AActor* InteractingActor)
 {
-
+	return EInteractableType::None;
 }
 
 void APlayerCharacter::TryInteract()
@@ -118,16 +167,38 @@ void APlayerCharacter::TryInteract()
 	FVector CameraLoc = Camera->GetComponentLocation();
 	FVector CameraRotVec = Camera->GetComponentRotation().Vector();
 	DrawDebugSphere(GetWorld(), Camera->GetComponentLocation() + (CameraRotVec * InteractRange), 5.f, 26, FColor::Red, false, 3.f);
-	if (GetWorld()->LineTraceSingleByChannel(Result, Camera->GetComponentLocation(), Camera->GetComponentLocation() + (CameraRotVec * InteractRange), ECollisionChannel::ECC_Visibility))
+#define InteractionCollision ECC_GameTraceChannel1
+	if (GetWorld()->LineTraceSingleByChannel(Result, Camera->GetComponentLocation(), Camera->GetComponentLocation() + (CameraRotVec * InteractRange), ECollisionChannel::InteractionCollision))
 	{
 		if (Cast<IInteractionInterface>(Result.Actor))
 		{
 			AInteractableBase* InteractObj = Cast<AInteractableBase>(Result.Actor);
 			if (InteractObj)
 			{
-				InteractObj->Interact(this);
+				EInteractableType Interaction = InteractObj->Interact(this); //Interacts with objects the player is looking at, interact function returns the interaction type of the object the player interacted with
+
+				
+				if (Interaction == Hidable && CurrentState == Hiding) //if the player is hiding and interacts with a hideable object then the player isnt hiding
+				{
+					CurrentState = Walking;
+					ApplyStress(50.f, 1.f);
+				}
+				else if (Interaction == Hidable) //if the player interacts with a hidable object then they are hiding
+				{
+					CurrentState = Hiding;
+					bPlayerInitialHide = true;
+				}
+				
+					
+				
 			}
 		}
 	}
+
+}
+
+void APlayerCharacter::ApplyStress(float amount, float duration)
+{
+	StressPool.Add(FStressStruct(amount, duration));
 }
 
