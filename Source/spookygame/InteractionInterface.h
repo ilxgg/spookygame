@@ -10,9 +10,10 @@ UENUM()
 enum EInteractableType
 {
 	None, //Used as default value, does nothing if returned
-	Hidable,
-	Objective,
-	Movable,
+	Hidable, //used for objects that you can hide in
+	Objective, //todo
+	Movable, //used for objects that move ie doors
+	Pickup, //used for objects that player can pickup
 };
 
 // This class does not need to be modified.
@@ -32,7 +33,7 @@ class SPOOKYGAME_API IInteractionInterface
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-	virtual EInteractableType Interact(AActor* InteractingActor);
+	virtual EInteractableType Interact(AActor* InteractingActor); //function used when two actors interact
 
 
 

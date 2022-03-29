@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "InteractionInterface.h"
 #include "spookygame\spookygame.h"
+#include "StaminaComponent.h"
 #include "PlayerCharacter.generated.h"
 
 
@@ -34,7 +35,10 @@ public:
 	UCameraComponent* Camera;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
-	UStressComponent* StressComponent;
+	UStressComponent* StressComponent; //Component used to measure and modify the player's stress
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+	UStaminaComponent* StaminaComponent; //Component used to allow player to sprint 
 
 
 
@@ -42,17 +46,25 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	void ManageStress(float DeltaTime);
+	void ManageStress(float DeltaTime); //called per tick to manage the player's stress 
 
-	void ManageStamina(float DeltaTime, bool IsRunning);
+	void ManageStamina(float DeltaTime, bool IsRunning); //called per tick to manage the stamina of the player depending if the player is running or not
 
-	void ManageMovement();
+	void ManageMovement(float DeltaTime); //called per tick to manage the movement using players state and should correct it accordingly
 
 	UFUNCTION(BlueprintCallable)
 	void IncreaseStress(float amount); //Increases Stress of player
 
 	UFUNCTION(BlueprintCallable)
 	void DecreaseStress(float amount); //Decreases stress of player 
+
+	UFUNCTION(BlueprintCallable)
+	void DisableMovement(); //diables player movement
+
+	UFUNCTION(BlueprintCallable)
+	void EnableMovement(); //enables player movement
+
+	void ChangeState(EPlayerStates newState);
 
 public:	
 	// Called every frame
@@ -69,10 +81,14 @@ public:
 
 	void LookRight(float value);
 
+	void TrySprint();
+
+	void EndSprint();
+
 	void TryInteract(); // Casts a line trace using Interaction channel to see if hit object is interactable and if so interacts with it
 
 	UFUNCTION(BlueprintCallable)
-	void ApplyStress(float amount, float duration);
+	void ApplyStress(float amount, float duration); //Adds stress to player's stress pool, added as amount over duration
 
 
 	UFUNCTION(BlueprintCallable)
@@ -85,16 +101,10 @@ public:
 protected:
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = "Player States", meta = (DisplayName = "Player Current State"))
-	TEnumAsByte<EPlayerStates> CurrentState;
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Movement", meta = (DisplayName = "Running Stamina Drain (per second)"))
-	float RunDrain; //Amount of stamina per second drained when running
-
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Movement", meta = (DisplayName = "Stamina Regen (per second)"))
-	float StaminaRegenRate; //amount of stamina regained per second
+	TEnumAsByte<EPlayerStates> CurrentState; //Player's current state, determines player behaviour
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Stress", meta = (DisplayName = "Stress loss when hiding (per second)"))
-	float StressHidingDecrease;
+	float StressHidingDecrease; //stress decrease per second whilst the player is hiding
 
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Controls", meta = (DisplayName = "Mouse Sensitivity"))
 	float SensMulti; //sensistivity multiplier for changing in game sensitivity
@@ -102,9 +112,15 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Controls", meta = (DisplayName = "Interact Range"))
 	float InteractRange; //distance that the player can be from an object in order to interact with it
 
-	bool bPlayerInitialHide;
+	bool bPlayerInitialHide; //used for when player initially hides
 
-	TArray<FStressStruct> StressPool;
+	TArray<FStressStruct> StressPool; //contains all the stress that needs to be added to the player
+
+	bool bIsMovementEnabled; //used to disable and enable walking and running
+
+	bool SprintToggle; //used to determine if sprinting is press and hold or toggle type
+
+	bool SprintToggleSecondRelease; //used when sprint mode is set to toggle, every 2nd release stops sprinting
 
 };
 

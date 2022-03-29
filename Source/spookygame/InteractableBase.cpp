@@ -12,6 +12,11 @@ AInteractableBase::AInteractableBase()
 	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComp"));
 	RootComponent = StaticMesh;
 
+	InteractionVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractVol"));
+	InteractionVolume->SetupAttachment(RootComponent);
+
+	InteractionVolume->SetCollisionProfileName("InteractionCollision");
+
 }
 
 // Called when the game starts or when spawned

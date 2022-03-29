@@ -3,6 +3,7 @@
 
 #include "PlayerCharacter.h"
 #include "InteractableBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "DrawDebugHelpers.h"
 
 // Sets default values
@@ -16,10 +17,16 @@ APlayerCharacter::APlayerCharacter()
 
 	StressComponent = CreateDefaultSubobject<UStressComponent>("StressComp");
 
+	StaminaComponent = CreateDefaultSubobject<UStaminaComponent>("StaminaComp");
+
 	CurrentState = EPlayerStates::Walking;
 	SensMulti = 1.f;
 
 	InteractRange = 130.f;
+
+	SprintToggle = false;
+	SprintToggleSecondRelease = true;
+	bIsMovementEnabled = true;
 
 }
 
@@ -63,15 +70,15 @@ void APlayerCharacter::ManageStamina(float DeltaTime, bool IsRunning)
 {
 	if (IsRunning)
 	{
-		//drains stamina
+		StaminaComponent->ManageStamina(DeltaTime, IsRunning);
 	}
 	else
 	{
-		//regen stamina
+		StaminaComponent->ManageStamina(DeltaTime, IsRunning);
 	}
 }
 
-void APlayerCharacter::ManageMovement()
+void APlayerCharacter::ManageMovement(float DeltaTime)
 {
 	switch (CurrentState)
 	{
@@ -79,15 +86,15 @@ void APlayerCharacter::ManageMovement()
 		break;
 
 	case(Hiding):
-		UE_LOG(LogTemp, Warning, TEXT("Hiding"));
+		ManageStamina(DeltaTime, false);
 		break;
 
 	case(Walking):
-		UE_LOG(LogTemp, Warning, TEXT("Walking"));
+		ManageStamina(DeltaTime, false);
 		break;
 
 	case(Running):
-		UE_LOG(LogTemp, Warning, TEXT("Running"));
+		ManageStamina(DeltaTime, true);
 		break;
 	
 	}
@@ -98,9 +105,11 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ManageStamina(DeltaTime, false);
 	ManageStress(DeltaTime);
-	ManageMovement();
+	bool SprintCheck = StaminaComponent->canSprint();
+	if(!SprintCheck && CurrentState == Running)
+		ChangeState(Walking);
+	ManageMovement(DeltaTime);
 
 }
 
@@ -113,18 +122,20 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("LookUp", this, &APlayerCharacter::LookUp);
 	PlayerInputComponent->BindAxis("LookRight", this, &APlayerCharacter::LookRight);
 	PlayerInputComponent->BindAction(FName("Interact"), IE_Pressed, this, &APlayerCharacter::TryInteract);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &APlayerCharacter::TrySprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &APlayerCharacter::EndSprint);
 
 }
 
 void APlayerCharacter::MoveForward(float value) //Move forward and back function, doesnt allow movement when hiding
 {
-	if (CurrentState != Hiding)
+	if (bIsMovementEnabled)
 		AddMovementInput(GetActorForwardVector(), value);
 }
 
 void APlayerCharacter::MoveRight(float value) //Move left and right function, doesnt allow movement when hiding
 {
-	if (CurrentState != Hiding)
+	if (bIsMovementEnabled)
 		AddMovementInput(GetActorRightVector(), value);
 }
 
@@ -138,6 +149,33 @@ void APlayerCharacter::LookRight(float value)
 		AddControllerYawInput(value * SensMulti);
 }
 
+void APlayerCharacter::TrySprint()
+{
+	if (StaminaComponent->canSprint() && CurrentState != Hiding)
+	{
+		ChangeState(Running);
+	}
+}
+
+void APlayerCharacter::EndSprint()
+{
+	if (CurrentState != Hiding)
+	{
+		if(SprintToggle)
+		{
+			SprintToggleSecondRelease = !SprintToggleSecondRelease; 
+			if (SprintToggleSecondRelease)
+			{
+				ChangeState(Walking);
+			}
+		}
+		else
+		{
+			ChangeState(Walking);
+		}
+	}
+}
+
 
 
 void APlayerCharacter::IncreaseStress(float amount)
@@ -148,6 +186,51 @@ void APlayerCharacter::IncreaseStress(float amount)
 void APlayerCharacter::DecreaseStress(float amount)
 {
 	StressComponent->DecreaseStress(amount);
+}
+
+void APlayerCharacter::DisableMovement()
+{
+	bIsMovementEnabled = false;
+}
+
+void APlayerCharacter::EnableMovement()
+{
+	bIsMovementEnabled = true;
+}
+
+void APlayerCharacter::ChangeState(EPlayerStates newState)
+{
+	switch (newState)
+	{
+	case Walking:
+		if (CurrentState != newState)
+		{
+			EnableMovement();
+			GetCharacterMovement()->MaxWalkSpeed = StaminaComponent->getMovementSpeed(false);
+		}
+		break;
+
+	case Running:
+		if (CurrentState != newState)
+		{
+			EnableMovement();
+			GetCharacterMovement()->MaxWalkSpeed = StaminaComponent->getMovementSpeed(true);
+		}
+		break;
+
+	case Hiding:
+		if (CurrentState != newState)
+		{
+			DisableMovement();
+			bPlayerInitialHide = true;
+		}
+		break;
+
+	default:
+		break;
+	}
+	CurrentState = newState;
+	
 }
 
 EPlayerStates APlayerCharacter::GetPlayerState()
@@ -180,13 +263,11 @@ void APlayerCharacter::TryInteract()
 				
 				if (Interaction == Hidable && CurrentState == Hiding) //if the player is hiding and interacts with a hideable object then the player isnt hiding
 				{
-					CurrentState = Walking;
-					ApplyStress(50.f, 1.f);
+					ChangeState(Walking);
 				}
 				else if (Interaction == Hidable) //if the player interacts with a hidable object then they are hiding
 				{
-					CurrentState = Hiding;
-					bPlayerInitialHide = true;
+					ChangeState(Hiding);
 				}
 				
 					

@@ -14,6 +14,8 @@ AHidableBase::AHidableBase()
 	bIsHidingActor = false;
 
 	InteractionType = EInteractableType::Hidable;
+
+	StaticMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
 EInteractableType AHidableBase::Interact(AActor* InteractingActor)
@@ -22,13 +24,11 @@ EInteractableType AHidableBase::Interact(AActor* InteractingActor)
 	{
 		Hide(InteractingActor);
 		bIsHidingActor = true;
-		UE_LOG(LogTemp, Warning, TEXT("Hiding Actor"));
 	}
 	else
 	{
 		EndHide(InteractingActor);
 		bIsHidingActor = false;
-		UE_LOG(LogTemp, Warning, TEXT("Not Hiding Actor"));
 	}
 
 	return InteractionType;
@@ -36,10 +36,12 @@ EInteractableType AHidableBase::Interact(AActor* InteractingActor)
 
 void AHidableBase::Hide(AActor* HidingActor)
 {
+	StaticMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	HidingActor->SetActorLocation(HideLocation->GetComponentLocation(), false, nullptr, ETeleportType::TeleportPhysics);
 }
 
 void AHidableBase::EndHide(AActor* HidingActor)
 {
+	StaticMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	HidingActor->SetActorLocation(ExitLocation->GetComponentLocation());
 }

@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "InteractionInterface.h"
+#include "Components\BoxComponent.h"
 #include "InteractableBase.generated.h"
+
 
 UCLASS()
 class SPOOKYGAME_API AInteractableBase : public AActor, public IInteractionInterface
@@ -18,6 +20,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* StaticMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UBoxComponent* InteractionVolume;
 
 	
 
