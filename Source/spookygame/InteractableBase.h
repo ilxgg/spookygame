@@ -38,6 +38,8 @@ public:
 
 	virtual EInteractableType Interact(AActor* InteractingActor) override;
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction")
+	void OnInteract();
 	
 
 };

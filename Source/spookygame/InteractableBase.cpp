@@ -35,7 +35,7 @@ void AInteractableBase::Tick(float DeltaTime)
 
 EInteractableType AInteractableBase::Interact(AActor* InteractingActor)
 {
-	//stuff
+	OnInteract();
 	return EInteractableType::None;
 }
 
